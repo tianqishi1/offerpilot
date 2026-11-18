@@ -11,3 +11,5 @@ services/api/debug-pdf.mjs
 services/api/src/types.d.ts
 
 services/api/debug-extract.mjs
+
+!.env.example
