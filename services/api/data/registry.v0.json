@@ -1,0 +1,47 @@
+{
+  "version": "2026.11.18-1",
+  "adapters": [
+    {
+      "id": "beisen",
+      "minExecutorVersion": "0.1.0",
+      "fingerprints": [
+        { "id": "beisen-zhiye", "domains": ["*.zhiye.com"], "pathRegex": "^/(campus|personal)", "weight": 1.0 }
+      ],
+      "enabled": false
+    },
+    {
+      "id": "moka",
+      "minExecutorVersion": "0.1.0",
+      "fingerprints": [
+        { "id": "moka-std", "domains": ["app.mokahr.com", "app-tc.mokahr.com"], "pathRegex": "^/(campus-recruitment|su)/", "weight": 1.0 },
+        { "id": "moka-channel", "paramExists": ["channelToken"], "pathRegex": "/campus", "weight": 0.8 }
+      ],
+      "verifyPresets": { "successTexts": ["提交成功", "申请已收到", "感谢投递"], "formGoneCheck": true, "emailCheck": false }
+    },
+    {
+      "id": "feishu",
+      "minExecutorVersion": "0.1.0",
+      "fingerprints": [
+        { "id": "feishu-jobs", "domains": ["*.jobs.feishu.cn"], "weight": 1.0 },
+        { "id": "feishu-private", "domainRegex": "jobs\\.f\\.", "weight": 0.9 }
+      ]
+    },
+    {
+      "id": "baidu",
+      "minExecutorVersion": "0.1.0",
+      "fingerprints": [
+        { "id": "baidu-talent", "domains": ["talent.baidu.com"], "weight": 1.0 }
+      ]
+    },
+    {
+      "id": "meituan",
+      "minExecutorVersion": "0.1.0",
+      "fingerprints": [
+        { "id": "meituan-zhaopin", "domains": ["zhaopin.meituan.com"], "weight": 1.0 }
+      ]
+    },
+    { "id": "generic", "minExecutorVersion": "0.1.0", "fingerprints": [] }
+  ],
+  "fallback": "generic",
+  "killSwitch": { "adapters": [], "features": [] }
+}

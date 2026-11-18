@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  phone     String?  @unique
+  email     String?  @unique
+  plan      String   @default("free")
+  createdAt DateTime @default(now())
+  consents  Consent[]
+  profile   Profile?
+  applications Application[]
+}
+
+model Consent {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id])
+  purpose    String
+  policyHash String
+  grantedAt  DateTime  @default(now())
+  revokedAt  DateTime?
+}
+
+model Profile {
+  id      String @id @default(cuid())
+  userId  String @unique
+  user    User   @relation(fields: [userId], references: [id])
+  data    Json
+  version Int    @default(1)
+}
+
+model Job {
+  id          String   @id
+  source      String
+  url         String
+  title       String
+  company     String
+  city        String?
+  jdText      String
+  deadline    DateTime?
+  dedupHash   String   @unique
+  freshnessAt DateTime
+  matches     JobMatch[]
+}
+
+model JobMatch {
+  id             String @id @default(cuid())
+  userId         String
+  jobId          String
+  job            Job    @relation(fields: [jobId], references: [id])
+  score          Float
+  dims           Json
+  gaps           Json
+  profileVersion Int
+  @@unique([userId, jobId, profileVersion])
+}
+
+model Application {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  jobId          String
+  resumeVersion  String
+  status         String   @default("draft")
+  closedReason   String?
+  source         String   @default("user_manual")
+  timestamps     Json
+  fillplanMetaId String?
+  createdAt      DateTime @default(now())
+}
+
+model FillplanMeta {
+  id             String @id
+  adapterId      String
+  adapterVersion String
+  schemaHash     String
+  fieldSources   Json
+  modelVer       String
+}
+
+model Event {
+  id        String   @id @default(cuid())
+  anonUser  String
+  name      String
+  props     Json
+  ts        DateTime @default(now())
+}

@@ -1,0 +1,15 @@
+{
+  "name": "@offerpilot/extension",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@offerpilot/core": "workspace:*",
+    "@offerpilot/executor": "workspace:*",
+    "@offerpilot/adapters": "workspace:*"
+  },
+  "devDependencies": { "esbuild": "^0.25.12", "@types/chrome": "^0.1.27" }
+}

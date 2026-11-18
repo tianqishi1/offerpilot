@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "OfferPilot 职航 (dev)",
+  "version": "0.1.0",
+  "description": "人机协同求职 Copilot：网申自动填写，提交永远由你确认。",
+  "permissions": ["storage", "scripting", "activeTab", "sidePanel"],
+  "optional_host_permissions": ["*://*/*"],
+  "background": { "service_worker": "background.js", "type": "module" },
+  "side_panel": { "default_path": "sidepanel.html" },
+  "action": { "default_title": "OfferPilot" }
+}
