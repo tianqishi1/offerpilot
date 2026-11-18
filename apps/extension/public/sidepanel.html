@@ -5,27 +5,44 @@
   <title>OfferPilot 职航</title>
   <style>
     body { font-family: system-ui, sans-serif; margin: 12px; font-size: 13px; }
-    h1 { font-size: 15px; }
+    h1 { font-size: 15px; } h2 { font-size: 13px; margin: 10px 0 4px; }
     button { margin: 4px 4px 4px 0; padding: 6px 10px; }
-    textarea { width: 100%; height: 120px; font-family: monospace; font-size: 11px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-    td, th { border: 1px solid #ddd; padding: 4px; font-size: 12px; }
+    textarea { width: 100%; font-family: inherit; font-size: 12px; }
+    input[type=text], input:not([type]) { width: 100%; padding: 3px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+    td, th { border: 1px solid #ddd; padding: 3px; font-size: 12px; }
     .g { background: #e8f5e9; } .y { background: #fff8e1; } .r { background: #ffebee; }
     #status { padding: 6px; background: #f5f5f5; margin: 6px 0; }
     #verify { padding: 8px; margin: 6px 0; font-weight: bold; }
-    #log { white-space: pre-wrap; font-size: 11px; color: #555; max-height: 160px; overflow: auto; }
+    #log { white-space: pre-wrap; font-size: 11px; color: #555; max-height: 140px; overflow: auto; }
+    .item { border: 1px solid #eee; padding: 6px; margin: 6px 0; }
+    .consent { font-size: 11px; color: #666; }
+    details { margin: 6px 0; }
   </style>
 </head>
 <body>
-  <h1>OfferPilot · 职航 (dev)</h1>
-  <div id="status">未连接。打开一个网申页面，点「1 授权并识别」。</div>
-  <div>API: <input id="api" value="http://127.0.0.1:8787" size="28" /></div>
-  <details><summary>演示画像（JSON，可编辑）</summary><textarea id="profile"></textarea></details>
+  <h1>OfferPilot · 职航 (beta)</h1>
+  <div id="status">第一步：上传简历（PDF/Word），解析后核对保存。</div>
+
+  <h2>① 简历</h2>
+  <label class="consent"><input type="checkbox" id="consent" /> 我同意将简历文本发送给 AI 解析（敏感字段自动剔除；原文件仅在内存处理、即刻丢弃，不落盘）</label><br />
+  <input type="file" id="resume-file" accept=".pdf,.docx" />
+  <button id="btn-upload">上传并解析简历</button>
+  <details open><summary>我的画像（可编辑）</summary>
+    <div id="profile-form"><i>尚未上传简历</i></div>
+    <button id="btn-save-profile">保存画像</button>
+  </details>
+
+  <h2>② 网申填写</h2>
+  <div>API: <input id="api" value="http://127.0.0.1:8787" size="26" /></div>
+  <details><summary>岗位 JD（可选粘贴，提升回答质量）</summary><textarea id="jd-text" rows="4"></textarea></details>
   <div>
     <button id="btn-detect">1 授权并识别</button>
-    <button id="btn-fill" disabled>2 生成计划并填写</button>
+    <button id="btn-plan" disabled>2 生成计划与回答</button>
+    <button id="btn-execute" disabled>确认并填写</button>
     <button id="btn-submit" disabled>3 确认提交</button>
   </div>
+  <div id="review"></div>
   <div id="verify"></div>
   <table id="fields"><thead><tr><th>字段</th><th>类型</th><th>来源</th><th>置信度</th><th>状态</th></tr></thead><tbody></tbody></table>
   <div id="log"></div>

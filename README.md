@@ -1,5 +1,9 @@
 # OfferPilot · 职航
 
+> **v0.2-beta（真人内测版）**：简历上传→AI解析→画像核对保存→网申识别→计划+开放题生成→人工审阅→自动填写（含附件上传/多页推进）→人工确认提交→提交校验。
+> 真实 DeepSeek 全链路已验证；部署与内测分发见 [docs/deploy.md](docs/deploy.md)。
+> 仍缺：真实站点准确率达标验证（W2）、托管 API（需一台云主机+HTTPS）、账号体系。
+
 人机协同求职 Copilot —— 网申自动填写，**提交永远由人确认**。
 本仓库是《求职Agent技术实现方案.md》§17 第一批任务的落地：契约 → 夹具 → 执行 → 模型 最小闭环。
 
@@ -80,4 +84,5 @@ LLM_LARGE=deepseek-flash      # 生成档；要更高质量可改 deepseek-v4-pr
 - content.js 未做 tree-shaking 优化（~800kb，含 zod）
 - LLM 离线模式为启发式 mock，仅用于链路验证
 - 演示页为受控组件语义模拟，非真实 React 运行时（真实站点验证在 W2）
+
 
