@@ -17,6 +17,12 @@
     #log { white-space: pre-wrap; font-size: 11px; color: #555; max-height: 140px; overflow: auto; }
     .item { border: 1px solid #eee; padding: 6px; margin: 6px 0; }
     .consent { font-size: 11px; color: #666; }
+    .req { color: #d32f2f; font-weight: bold; }
+    .hint { background: #fff3e0; padding: 6px; margin: 6px 0; font-size: 12px; }
+    #resume-chip { font-size: 12px; color: #1565c0; margin: 4px 0; }
+    .legend { font-size: 11px; color: #666; margin: 4px 0; }
+    .pulse { animation: pulse 1.2s infinite; }
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(25,118,210,.5); } 70% { box-shadow: 0 0 0 8px rgba(25,118,210,0); } 100% { box-shadow: 0 0 0 0 rgba(25,118,210,0); } }
     details { margin: 6px 0; }
   </style>
 </head>
@@ -28,6 +34,7 @@
   <label class="consent"><input type="checkbox" id="consent" /> 我同意将简历文本发送给 AI 解析（敏感字段自动剔除；原文件仅在内存处理、即刻丢弃，不落盘）</label><br />
   <input type="file" id="resume-file" accept=".pdf,.docx" />
   <button id="btn-upload">上传并解析简历</button>
+  <div id="resume-chip"></div>
   <details open><summary>我的画像（可编辑）</summary>
     <div id="profile-form"><i>尚未上传简历</i></div>
     <button id="btn-save-profile">保存画像</button>
@@ -42,10 +49,12 @@
     <button id="btn-execute" disabled>确认并填写</button>
     <button id="btn-submit" disabled>3 确认提交</button>
   </div>
+  <div class="legend">图例：<span class="req">*</span> 必填 ｜ 绿=画像直取(≥90%) ｜ 黄=待确认 ｜ 红=缺失/需手填</div>
   <div id="review"></div>
   <div id="verify"></div>
-  <table id="fields"><thead><tr><th>字段</th><th>类型</th><th>来源</th><th>置信度</th><th>状态</th></tr></thead><tbody></tbody></table>
+  <table id="fields"><thead><tr><th>字段</th><th>类型</th><th>来源</th><th>置信度</th><th>将填入</th><th>状态</th></tr></thead><tbody></tbody></table>
   <div id="log"></div>
   <script src="sidepanel.js"></script>
 </body>
 </html>
+

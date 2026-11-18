@@ -35,6 +35,8 @@ chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => 
 chrome.runtime.onStartup.addListener(() => { void syncRegistry(); });
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  // 只处理路由类消息；广播类消息（PROGRESS/VERIFY_RESULT 等）不占用应答通道
+  if (!['ENABLE_TAB', 'EXECUTE_PLAN', 'CONFIRM_SUBMIT', 'GET_REGISTRY'].includes(msg.type)) return false;
   (async () => {
     if (msg.type === 'ENABLE_TAB') {
       if (!registry) await syncRegistry();
@@ -58,4 +60,5 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   })().catch((e) => sendResponse({ ok: false, error: (e as Error).message }));
   return true;
 });
+
 
