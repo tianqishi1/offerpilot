@@ -34,7 +34,18 @@ pnpm demo                                     # http://127.0.0.1:5173/
 #   1 授权并识别 → 2 生成计划并填写 → 检查黄/红字段 → 3 确认提交 → ✅ 已验证提交成功
 ```
 
-接入真实 LLM：设置 `DASHSCOPE_API_KEY`（可选 `LLM_BASE_URL/LLM_SMALL/LLM_LARGE`），API 自动切换国内端点网关。
+接入真实 LLM（已验证 DeepSeek）：复制 `services/api/.env.example` 为 `services/api/.env` 填入 Key：
+
+```
+LLM_API_KEY=<你的Key>
+LLM_BASE_URL=https://api.deepseek.com
+LLM_SMALL=deepseek-flash      # 抽取/映射档
+LLM_LARGE=deepseek-flash      # 生成档；要更高质量可改 deepseek-v4-pro
+```
+
+`pnpm --filter @offerpilot/api start` 自动加载 .env（Node --env-file-if-exists）。
+无 Key 时自动进入离线 mock 模式。兼容任何 OpenAI 格式端点（DashScope/GLM 等改 BASE_URL+模型名即可）。
+实测：deepseek-flash 7 字段映射 ~6s，姓名/学校/专业/城市正确映射，薪资→user、开放题→generated、内推码→missing。
 
 ## 已实现的安全护栏（测试覆盖）
 
@@ -69,3 +80,4 @@ pnpm demo                                     # http://127.0.0.1:5173/
 - content.js 未做 tree-shaking 优化（~800kb，含 zod）
 - LLM 离线模式为启发式 mock，仅用于链路验证
 - 演示页为受控组件语义模拟，非真实 React 运行时（真实站点验证在 W2）
+

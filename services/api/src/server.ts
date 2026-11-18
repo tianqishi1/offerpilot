@@ -21,22 +21,37 @@ const FillPlanRequest = z.object({
   jd: Job,
 });
 
+/**
+ * LLM 配置（供应商中立）：
+ *   LLM_API_KEY / DEEPSEEK_API_KEY / DASHSCOPE_API_KEY 任一即可
+ *   LLM_BASE_URL  默认 https://api.deepseek.com（OpenAI 兼容）
+ *   LLM_SMALL     默认 deepseek-flash（抽取/映射）
+ *   LLM_LARGE     默认 deepseek-v4-pro（生成/复核；.env 可覆盖为 flash 省成本）
+ * 无 Key 时进入离线 mock 模式，全链路仍可跑通。
+ */
 function defaultLlm(): LlmClient {
-  const key = process.env.DASHSCOPE_API_KEY;
+  const key = process.env.LLM_API_KEY ?? process.env.DEEPSEEK_API_KEY ?? process.env.DASHSCOPE_API_KEY;
   if (key) {
     const provider = new OpenAiCompatibleProvider({
-      baseUrl: process.env.LLM_BASE_URL ?? 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+      baseUrl: process.env.LLM_BASE_URL ?? 'https://api.deepseek.com',
       apiKey: key,
       models: {
-        small: process.env.LLM_SMALL ?? 'qwen-flash',
-        large: process.env.LLM_LARGE ?? 'qwen-plus',
-        embed: process.env.LLM_EMBED ?? 'text-embedding-v4',
+        small: process.env.LLM_SMALL ?? 'deepseek-flash',
+        large: process.env.LLM_LARGE ?? 'deepseek-v4-pro',
+        embed: process.env.LLM_EMBED ?? 'deepseek-flash',
       },
+      timeoutMs: Number(process.env.LLM_TIMEOUT_MS ?? 90_000),
     });
     return createLlmGateway({ providers: { small: provider, large: provider }, cache: new MemoryCache() });
   }
   const mock = new MockProvider(heuristicMappingResponder);
   return createLlmGateway({ providers: { small: mock, large: mock }, cache: new MemoryCache() });
+}
+
+export function llmMode(): string {
+  const key = process.env.LLM_API_KEY ?? process.env.DEEPSEEK_API_KEY ?? process.env.DASHSCOPE_API_KEY;
+  if (!key) return 'offline-mock';
+  return `${process.env.LLM_BASE_URL ?? 'https://api.deepseek.com'} small=${process.env.LLM_SMALL ?? 'deepseek-flash'} large=${process.env.LLM_LARGE ?? 'deepseek-v4-pro'}`;
 }
 
 export interface ServerOptions {
@@ -52,7 +67,7 @@ export function buildServer(opts: ServerOptions = {}) {
   const llm = opts.llm ?? defaultLlm();
   const events: unknown[] = [];
 
-  app.get('/health', async () => ({ ok: true, version: '0.1.0', registryVersion: registry.version }));
+  app.get('/health', async () => ({ ok: true, version: '0.1.0', registryVersion: registry.version, llmMode: llmMode() }));
 
   app.get('/registry', async () => ({
     keyId: signer.keyId,
