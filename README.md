@@ -1,88 +1,90 @@
 # OfferPilot · 职航
 
-> **v0.2-beta（真人内测版）**：简历上传→AI解析→画像核对保存→网申识别→计划+开放题生成→人工审阅→自动填写（含附件上传/多页推进）→人工确认提交→提交校验。
-> 真实 DeepSeek 全链路已验证；部署与内测分发见 [docs/deploy.md](docs/deploy.md)。
-> 仍缺：真实站点准确率达标验证（W2）、托管 API（需一台云主机+HTTPS）、账号体系。
+**人机协同的 AI 求职 Copilot**：简历解析 → 岗位匹配 → 定向回答 → 网申自动填写 → **人工确认提交** → 提交校验。
 
-人机协同求职 Copilot —— 网申自动填写，**提交永远由人确认**。
-本仓库是《求职Agent技术实现方案.md》§17 第一批任务的落地：契约 → 夹具 → 执行 → 模型 最小闭环。
+> 不是海投机器人。每一份投递都由你确认；敏感/主观问题（薪资、签证等）永远由你本人回答；AI 只基于你的真实经历写作，不编造。
 
-## 仓库结构
+**本地优先，无需服务器/域名**：克隆仓库 → 一条命令启动 → 加载浏览器插件即可使用。你的简历和 Key 只留在自己电脑上。
 
-```
-packages/core       共享契约（Zod）：FillPlan/SelectorStrategy/Adapter协议/状态机/注册中心/消息/遥测白名单
-packages/executor   通用执行引擎：native setter(React受控)/DataTransfer文件上传/combobox/多页状态机/提交校验
-packages/adapters   通用 LLM-DOM 适配器：字段提取 + schema→画像映射 + knockout 保护
-packages/llm        LLM 网关：分层路由/JSON Schema+Zod校验/重试反馈/降级/缓存/月度预算；OpenAI兼容供应商+Mock
-services/api        Fastify：/health /registry(Ed25519签名) /registry/key /fillplan /events(白名单)
-apps/extension      MV3 插件（WXT 前的最小实现）：background/content/sidepanel + 演示网申页
-```
+---
 
-## 快速开始
+## 🚀 快速开始（3 步）
+
+**准备**：[Node.js](https://nodejs.org/) 20+（含 npm）。AI 模型 Key 可选（推荐 [DeepSeek](https://platform.deepseek.com)，便宜；没有 Key 也能跑离线演示模式）。
 
 ```bash
-pnpm install
-pnpm build        # 拓扑序构建全部包
-pnpm test         # 59 个测试（core 18 / llm 10 / executor 21 / adapters 6 / api 4）
-pnpm typecheck    # strict + noUncheckedIndexedAccess
-
-# 启动 API（无 DASHSCOPE_API_KEY 时自动进入离线 mock 模式，全链路可跑）
-pnpm --filter @offerpilot/api start          # :8787
-
-# 启动演示网申页（React 受控组件语义模拟 + combobox + 上传 + 多页 + 提交成功页）
-pnpm demo                                     # http://127.0.0.1:5173/
-
-# 加载插件：Chrome → chrome://extensions → 开发者模式 → 加载已解压的扩展程序
-#   选择 apps/extension/dist
-# 打开 http://127.0.0.1:5173/ → 点插件图标打开侧栏 →
-#   1 授权并识别 → 2 生成计划并填写 → 检查黄/红字段 → 3 确认提交 → ✅ 已验证提交成功
+git clone https://github.com/<your-name>/offerpilot.git
+cd offerpilot
+npm start
 ```
 
-接入真实 LLM（已验证 DeepSeek）：复制 `services/api/.env.example` 为 `services/api/.env` 填入 Key：
+`npm start` 会自动：安装 pnpm（如缺失）→ 安装依赖 → 构建 → 引导你填 API Key（首次）→ 启动服务。
+
+然后：
+1. Chrome 打开 `chrome://extensions` → 开启「开发者模式」
+2. 「加载已解压的扩展程序」→ 选择 `offerpilot/apps/extension/dist`
+3. 打开 http://127.0.0.1:5173/ （内置演示网申页）→ 点工具栏 OfferPilot 图标
+4. 上传简历 → **1 授权并识别** → **2 生成计划与回答** → 审阅 → **确认并填写** → **3 确认提交**
+
+页面右下角有悬浮徽标实时显示进度；填过的字段会高亮（绿=已填 / 黄=待确认 / 红=缺失）。
+
+Windows / macOS / Linux 通用。macOS/Linux 也可 `./start.sh`。详见 [docs/self-deploy.md](docs/self-deploy.md)。
+
+## ✨ 功能
+
+- **简历解析**：PDF/Word → 结构化画像，可视化核对编辑，本地保存
+- **网申自动填写**：通用 LLM-DOM 引擎，适配 React 受控组件 / combobox / 文件上传 / 多页表单
+- **定向开放题回答**：基于你的真实经历 + 目标岗位 JD 生成，**审阅编辑后才填入**，带溯源
+- **附件上传**：自动上传你的简历文件到网申附件栏
+- **提交校验**：多证据验证是否真正提交成功（反"草稿幻觉"）；即使你直接点页面提交按钮也能监测到
+- **安全护栏**：knockout 问题禁代答 / 敏感字段不出本机 / 永不自动提交 / 遥测白名单
+
+## 🔒 隐私与数据
 
 ```
-LLM_API_KEY=<你的Key>
-LLM_BASE_URL=https://api.deepseek.com
-LLM_SMALL=deepseek-flash      # 抽取/映射档
-LLM_LARGE=deepseek-flash      # 生成档；要更高质量可改 deepseek-v4-pro
+你的浏览器 ── 画像/简历字节存本地(chrome.storage) ── 插件不接触任何 Key
+     │ 仅发送：脱敏画像文本 + 字段schema + JD
+     ▼
+本机 API (127.0.0.1:8787) ── 简历原文件仅内存处理、即刻丢弃、不落盘
+     │ 你配置的 LLM 端点（默认 DeepSeek 官方）
+     ▼
+   AI 模型
 ```
 
-`pnpm --filter @offerpilot/api start` 自动加载 .env（Node --env-file-if-exists）。
-无 Key 时自动进入离线 mock 模式。兼容任何 OpenAI 格式端点（DashScope/GLM 等改 BASE_URL+模型名即可）。
-实测：deepseek-flash 7 字段映射 ~6s，姓名/学校/专业/城市正确映射，薪资→user、开放题→generated、内推码→missing。
+- 无账号、无云端数据库、无遥测上传（内测版事件仅存本机内存）
+- API Key 存 `services/api/.env`（已 gitignore，**不会进入仓库**）
+- 本地部署 = 除你自行配置的 LLM API 外，数据不出本机
 
-## 已实现的安全护栏（测试覆盖）
+## 💰 成本
 
-- **反草稿幻觉**：提交后多证据校验（URL/成功文案/表单消失），≥2 项才记 verified；状态机禁止 submitted 跳过 verified。
-- **knockout 禁代答**：薪资/签证/竞业等字段一律 source=user，AI 不代填。
-- **敏感数据不出浏览器**：上传前 stripSensitive 深度剔除 + findSensitivePaths 扫描；API 冒烟验证响应无手机号泄漏。
-- **遥测白名单**：/events 只接受白名单事件名，props 仅标量。
-- **注册中心签名**：Ed25519 签名下发，篡改即验签失败；killSwitch 可分钟级下线适配器。
-- **永不自动提交**：执行引擎只填表，submit 由 sidepanel「确认提交」人工触发。
+自带 Key，按量付费。DeepSeek-flash 参考价：输入 ¥1-2/百万 tokens、输出 ¥4-8/百万。一次网申填写约 ¥0.02-0.1。无 Key 时离线演示模式免费（启发式映射，无 AI 生成）。
 
-## 关键测试场景
+## ❓ FAQ
 
-- naive `el.value=x` 被 React 受控状态回滚 vs native setter+tracker 复位存活（executor/native.test）
-- DataTransfer 文件上传 + dropzone 兜底（executor/file.test）
-- combobox search→等选项→点击→选中确认；选项不存在抛 option_not_found（executor/combobox.test）
-- 多页表单推进 + 两页字段填写（executor/execute.test）
-- 指纹判定：zhiye.com 租户子域 / mokahr 标准路径与短链 / channelToken / killSwitch / generic 兜底（core/registry.test）
-- 结构化调用：非法 JSON 重试带错误反馈 / Zod 校验失败重试 / 降级供应商 / 缓存命中 / 预算超限（llm/structured.test）
-- API：签名验签+篡改检测 / fillplan 映射+knockout+敏感剔除 / events 白名单 400（api/api.test）
+- **需要域名/服务器/HTTPS 吗？** 不需要。localhost 天然豁免 HTTPS 要求。
+- **可以换模型吗？** 可以。任何 OpenAI 兼容端点：改 `.env` 的 `LLM_BASE_URL/LLM_SMALL/LLM_LARGE`（DashScope、GLM、本地 Ollama 均可）。
+- **端口被占用？** 8787(API)/5173(演示页)。关闭旧进程或改 `PORT`/`DEMO_PORT` 环境变量。
+- **扫描件 PDF？** 暂不支持，请用文本版 PDF/Word。
+- **真实招聘网站能用吗？** 通用引擎可尝试任意网申页，但真实站点适配仍在打磨（见 Roadmap）；黄/红字段务必人工核对。
 
-## 下一步（按技术方案排期）
+## 🛠 开发者
 
-- W2：百度/美团真实站点标杆打磨 + 夹具录制（当前夹具为语义模拟，需补真实 DOM 快照）
-- W3-4：飞书 jobs.feishu.cn / Moka app.mokahr.com 专用适配器（Moka 上传简历借平台解析路径）
-- 匹配管线（pgvector + LLM 复核）、定向简历管线（事实护栏 + PDF 渲染）、投递看板
-- 插件迁移 WXT + React sidepanel；公钥内置固定（当前 dev 从 /registry/key 获取）
-- Prisma 迁移落库（schema 已备：services/api/prisma/schema.prisma）
+```bash
+pnpm install && pnpm build && pnpm test   # 63 个测试
+pnpm typecheck                            # strict TS
+```
 
-## 已知限制（dev 阶段）
+Monorepo：`packages/core`(契约) / `executor`(执行引擎) / `adapters`(适配器) / `llm`(网关) / `services/api` / `apps/extension`。
+设计文档：见仓库根目录《求职Agent可行性调研报告》《产品设计方案》《技术实现方案》（中文）。
 
-- sidepanel 为原生 TS 最小实现（非 React）；权限请求为开发便利一次性申请全部站点
-- content.js 未做 tree-shaking 优化（~800kb，含 zod）
-- LLM 离线模式为启发式 mock，仅用于链路验证
-- 演示页为受控组件语义模拟，非真实 React 运行时（真实站点验证在 W2）
+## 🗺 Roadmap
 
+- [x] 通用填写引擎 + 简历解析 + 开放题生成 + 提交校验 + 页内反馈
+- [ ] 真实站点标杆打磨（百度/美团等，字段准确率 ≥95% 门禁）
+- [ ] 飞书招聘 / Moka 专用适配器
+- [ ] 岗位聚合匹配 + 投递看板 + 跟进提醒
+- [ ] 模拟面试 + 结果数据飞轮
 
+## License
+
+[MIT](LICENSE)

@@ -12,7 +12,8 @@
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck",
     "dev:api": "pnpm --filter @offerpilot/api dev",
-    "demo": "node scripts/demo-server.mjs"
+    "demo": "node scripts/demo-server.mjs",
+    "start": "node scripts/start.mjs"
   },
   "devDependencies": {
     "typescript": "^5.9.3",
