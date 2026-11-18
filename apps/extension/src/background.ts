@@ -31,6 +31,7 @@ async function verifyEd25519(pem: string, payload: unknown, sigB64: string): Pro
 }
 
 chrome.runtime.onInstalled.addListener(() => { void syncRegistry(); });
+chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
 chrome.runtime.onStartup.addListener(() => { void syncRegistry(); });
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -44,6 +45,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       } catch {
         await chrome.scripting.updateContentScripts([{ id, matches: [origin], js: ['content.js'], runAt: 'document_idle' }]).catch(() => {});
       }
+      // 已打开的页面不会自动注入，需立即 executeScript（content 侧有防重复注入守卫）
+      await chrome.scripting.executeScript({ target: { tabId: msg.tabId as number }, files: ['content.js'] }).catch(() => {});
       await chrome.tabs.sendMessage(msg.tabId as number, { type: 'INIT', registry });
       sendResponse({ ok: true });
     } else if (msg.type === 'EXECUTE_PLAN' || msg.type === 'CONFIRM_SUBMIT') {
@@ -55,3 +58,4 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   })().catch((e) => sendResponse({ ok: false, error: (e as Error).message }));
   return true;
 });
+

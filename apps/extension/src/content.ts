@@ -2,6 +2,10 @@ import { detectAdapter, type Registry } from '@offerpilot/core';
 import { extractFields } from '@offerpilot/adapters';
 import { createPageContext, executePlan, resolveField, verifySubmit, waitUntilDomStable } from '@offerpilot/executor';
 
+const w = window as unknown as { __offerpilotInjected?: boolean };
+if (w.__offerpilotInjected) { throw new Error('offerpilot already injected'); }
+w.__offerpilotInjected = true;
+
 const ctx = createPageContext(window);
 const MAX_PAGES = 6;
 
@@ -77,3 +81,4 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   })().catch((e) => sendResponse({ ok: false, error: (e as Error).message }));
   return true;
 });
+

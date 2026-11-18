@@ -3,6 +3,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Fastify from 'fastify';
 import multipart from '@fastify/multipart';
+import cors from '@fastify/cors';
 import mammoth from 'mammoth';
 import { extractText } from 'unpdf';
 import { z, ZodError } from 'zod';
@@ -73,6 +74,8 @@ export function buildServer(opts: ServerOptions = {}) {
   const llm = opts.llm ?? defaultLlm();
   const events: unknown[] = [];
 
+  // 内测期允许插件侧栏跨域调用（CORS 非安全边界；Key 仅在服务端，生产可收紧 origin）
+  app.register(cors, { origin: true });
   app.register(multipart, { limits: { fileSize: 10 * 1024 * 1024, files: 1 } });
 
   app.get('/health', async () => ({ ok: true, version: '0.2.0-beta', registryVersion: registry.version, llmMode: llmMode() }));
@@ -142,4 +145,5 @@ export function buildServer(opts: ServerOptions = {}) {
 
   return app;
 }
+
 
